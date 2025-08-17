@@ -32,7 +32,11 @@ dependencies {
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
-	runtimeOnly 'com.h2database:h2' //h2커넥터 테스트후 삭제 예정입니다!
+	//gpt api 연동용
+	implementation 'org.springframework.boot:spring-boot-starter-webflux' // WebClient
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+
 
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
