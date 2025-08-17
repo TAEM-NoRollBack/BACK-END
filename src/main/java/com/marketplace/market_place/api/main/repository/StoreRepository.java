@@ -15,4 +15,6 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
     List<Store> findTop10ByMarketIdOrderByRatingDesc(Long marketId);
 
     Page<Store> findByMarketId(Long marketId, Pageable pageable);
+
+    Page<Store> findByNameContainingIgnoreCase(String keyword, Pageable pageable);
 }
