@@ -11,26 +11,31 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfigProd {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/public/**", "/login/**", "/css/**", "/js/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/posts/**").authenticated() // 게시글 관련 인증 필요
+                        .requestMatchers("/mypage/**").authenticated() // 마이페이지 인증 필요
+                        .requestMatchers("/api/v1/**").permitAll() // 기본 CRUD는 허용
+                        .anyRequest().permitAll()
+                )
+                .sessionManagement(session -> session
+                        .maximumSessions(1) // 중복 로그인 방지
+                        .maxSessionsPreventsLogin(false)
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/", true)
+                        .defaultSuccessUrl("/")
                         .permitAll()
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")
+                        .logoutSuccessUrl("/")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
                         .permitAll()
-                )
-                .sessionManagement(session -> session
-                        .maximumSessions(1)
                 );
-
         return http.build();
     }
 }

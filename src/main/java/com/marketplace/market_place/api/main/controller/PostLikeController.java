@@ -1,42 +1,53 @@
 package com.marketplace.market_place.api.main.controller;
 
-import com.marketplace.market_place.api.main.entity.PostLike;
+import com.marketplace.market_place.api.main.dto.LikeToggleResponse;
 import com.marketplace.market_place.api.main.service.PostLikeService;
+import com.marketplace.market_place.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/post-likes")
+@RequestMapping("/api/posts")
 public class PostLikeController {
 
-    private final PostLikeService service;
+    private final PostLikeService postLikeService;
 
-    @GetMapping
-    public List<PostLike> getAll() { return service.findAll(); }
+    /**
+     * 좋아요 토글 (등록/취소) - PROD 버전 (세션 기반)
+     */
+    @PostMapping("/{postId}/likes")
+    public ResponseEntity<?> toggleLike(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal User user
+    ) {
+        if (user == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+        }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<PostLike> get(@PathVariable Long id) {
-        return service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        LikeToggleResponse response = postLikeService.toggleLike(postId, user.getId());
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", response
+        ));
     }
 
-    @PostMapping
-    public PostLike create(@RequestBody PostLike entity) { return service.save(entity); }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<PostLike> update(@PathVariable Long id, @RequestBody PostLike entity) {
-        return service.findById(id).map(ex -> {
-            entity.setId(id);
-            return ResponseEntity.ok(service.save(entity));
-        }).orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
-        return ResponseEntity.noContent().build();
+    /**
+     * 좋아요 수 조회
+     */
+    @GetMapping("/{postId}/likes/count")
+    public ResponseEntity<Map<String, Object>> likeCount(@PathVariable Long postId) {
+        long count = postLikeService.countLikes(postId);
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", Map.of(
+                        "postId", postId,
+                        "likeCount", count
+                )
+        ));
     }
 }
