@@ -24,10 +24,12 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/h2-console/**", "/signup", "/api/auth/signup").permitAll()
+                        .requestMatchers("/api/v1/signup").authenticated() // GUEST도 접근 가능하도록 추가
                         .requestMatchers("/api/v1/**").hasRole("USER")
                         .anyRequest().authenticated()
                 )
                 .logout(logout -> logout
+                        .logoutSuccessUrl("/")
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2AuthenticationSuccessHandler)
