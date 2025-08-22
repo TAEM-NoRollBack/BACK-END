@@ -1,42 +1,58 @@
 package com.marketplace.market_place.api.main.controller;
 
+import com.marketplace.market_place.api.main.dto.StoreCardDto;
+import com.marketplace.market_place.api.main.dto.StoreListResponse;
 import com.marketplace.market_place.api.main.entity.Store;
-import com.marketplace.market_place.api.main.service.StoreService;
+import com.marketplace.market_place.api.main.repository.StoreRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequestMapping("/api/main")
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/stores")
 public class StoreController {
 
-    private final StoreService service;
+    private final StoreRepository storeRepository;
 
-    @GetMapping
-    public List<Store> getAll() { return service.findAll(); }
+    /**
+     * 가게 목록 조회 (평점/리뷰수 정렬, 시장별 필터, 페이징)
+     * GET /api/main/stores?marketId=&amp;sort=rating|reviewCount&amp;page=0&amp;size=10
+     */
+    @GetMapping("/stores")
+    public StoreListResponse listStores(@RequestParam(required = false) Long marketId,
+                                        @RequestParam(defaultValue = "rating") String sort,
+                                        @RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = "10") int size) {
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Store> get(@PathVariable Long id) {
-        return service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-    }
+        Sort springSort = switch (sort) {
+            case "reviewCount" -> Sort.by(Sort.Direction.DESC, "reviewCount");
+            default -> Sort.by(Sort.Direction.DESC, "rating");
+        };
 
-    @PostMapping
-    public Store create(@RequestBody Store entity) { return service.save(entity); }
+        PageRequest pr = PageRequest.of(page, size, springSort);
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Store> update(@PathVariable Long id, @RequestBody Store entity) {
-        return service.findById(id).map(ex -> {
-            entity.setId(id);
-            return ResponseEntity.ok(service.save(entity));
-        }).orElse(ResponseEntity.notFound().build());
-    }
+        Page<Store> result = (marketId != null)
+                ? storeRepository.findByMarketId(marketId, pr)
+                : storeRepository.findAll(pr);
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
-        return ResponseEntity.noContent().build();
+        List<StoreCardDto> content = result.getContent().stream()
+                .map(s -> new StoreCardDto(
+                        s.getId(),
+                        s.getName(),
+                        s.getMarket() != null ? s.getMarket().getName() : null,
+                        s.getLat(),
+                        s.getLon(),
+                        s.getRating() != null ? s.getRating() : 0.0,
+                        s.getReviewCount() != null ? s.getReviewCount() : 0,
+                        s.getThumbnail()
+                ))
+                .toList();
+
+        return new StoreListResponse(content, result.getNumber(), result.getSize(), result.getTotalElements());
     }
 }

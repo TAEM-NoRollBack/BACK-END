@@ -41,13 +41,10 @@ public class User {
     private Role role;
 
     private String provider;
-
     private String providerId;
 
     @Builder
-    public User(String name, String email, String nickname, String gender,
-                String university, String department, String birthdate,
-                Role role, String provider, String providerId) {
+    public User(String name, String email, String nickname, String gender, String university, String department, String birthdate, Role role, String provider, String providerId) {
         this.name = name;
         this.email = email;
         this.nickname = nickname;
@@ -65,9 +62,7 @@ public class User {
         return this;
     }
 
-    public User updateAdditionalInfo(String name, String nickname, String email,
-                                     String gender, String university,
-                                     String department, String birthdate) {
+    public User updateAdditionalInfo(String name, String nickname, String email, String gender, String university, String department, String birthdate) {
         this.name = name;
         this.nickname = nickname;
         this.email = email;

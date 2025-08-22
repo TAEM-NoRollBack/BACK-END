@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
+@NoArgsConstructor      // JPA 기본 생성자
 @Entity
 @Table(name = "market")
 public class Market {
@@ -16,15 +16,18 @@ public class Market {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 기본 정보
     @Column(nullable = false)
     private String name;
 
     private String address;
 
-    private Double lat; // 위도
-    private Double lon; // 경도
+    // 좌표
+    private Double lat;     // 위도
+    private Double lon;     // 경도
 
-    private Double rating;
-    private Integer reviewCount;
-    private String thumbnail;
+    // 전시용 지표(메인 카드에 필요)
+    private Double rating;      // 평균 평점
+    private Integer reviewCount;// 리뷰 개수
+    private String thumbnail;   // 대표 이미지 URL
 }

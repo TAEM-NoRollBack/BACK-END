@@ -1,43 +1,28 @@
 package com.marketplace.market_place.api.main.controller;
 
-import com.marketplace.market_place.api.main.entity.Market;
+import com.marketplace.market_place.api.main.dto.MarketListResponse;
 import com.marketplace.market_place.api.main.service.MarketService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/api/main")
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/markets")
 public class MarketController {
 
-    private final MarketService service;
+    private final MarketService marketService;
 
-    @GetMapping
-    public List<Market> getAll() { return service.findAll(); }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Market> get(@PathVariable Long id) {
-        return service.findById(id).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping
-    public Market create(@RequestBody Market entity) { return service.save(entity); }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Market> update(@PathVariable Long id, @RequestBody Market entity) {
-        return service.findById(id).map(ex -> {
-            entity.setId(id);
-            return ResponseEntity.ok(service.save(entity));
-        }).orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
-        return ResponseEntity.noContent().build();
+    // 시장 목록 조회 (페이징/정렬)
+    @GetMapping("/markets")
+    public MarketListResponse listMarkets(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "rating") String sort
+            // TODO: 나중에 거리 정렬/반경 필터가 필요하면 lat/lon/radius 파라미터 추가
+    ) {
+        return marketService.list(page, size, sort);
     }
 }
