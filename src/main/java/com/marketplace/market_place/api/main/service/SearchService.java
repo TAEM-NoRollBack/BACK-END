@@ -2,9 +2,9 @@ package com.marketplace.market_place.api.main.service;
 
 import com.marketplace.market_place.api.main.dto.*;
 import com.marketplace.market_place.api.main.entity.Market;
-import com.marketplace.market_place.api.main.entity.Store;
+import com.marketplace.market_place.api.main.entity.ApiStore;
 import com.marketplace.market_place.api.main.repository.MarketRepository;
-import com.marketplace.market_place.api.main.repository.StoreRepository;
+import com.marketplace.market_place.api.main.repository.ApiStoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,7 +20,7 @@ import java.util.Locale;
 public class SearchService {
 
     private final MarketRepository marketRepository;
-    private final StoreRepository storeRepository;
+    private final ApiStoreRepository apiStoreRepository;
 
     @Transactional(readOnly = true)
     public SearchResponse search(String q, String type, int page, int size, String sort) {
@@ -71,27 +71,27 @@ public class SearchService {
 
         // STORE 검색
         if (t.equals("ALL") || t.equals("STORE")) {
-            Page<Store> pageResult = storeRepository.findByNameContainingIgnoreCase(keyword, PageRequest.of(0, Math.max(size * 3, 50)));
-            List<Store> sorted = switch (s) {
+            Page<ApiStore> pageResult = apiStoreRepository.findByNameContainingIgnoreCase(keyword, PageRequest.of(0, Math.max(size * 3, 50)));
+            List<ApiStore> sorted = switch (s) {
                 case "rating" -> pageResult.getContent().stream()
-                        .sorted(Comparator.comparingDouble((Store st) -> nz(st.getRating())).reversed()
-                                .thenComparing((Store st) -> nzi(st.getReviewCount()), Comparator.reverseOrder())
-                                .thenComparing(Store::getName))
+                        .sorted(Comparator.comparingDouble((ApiStore st) -> nz(st.getRating())).reversed()
+                                .thenComparing((ApiStore st) -> nzi(st.getReviewCount()), Comparator.reverseOrder())
+                                .thenComparing(ApiStore::getName))
                         .toList();
                 case "reviewcount" -> pageResult.getContent().stream()
-                        .sorted(Comparator.comparingInt((Store st) -> nzi(st.getReviewCount())).reversed()
-                                .thenComparing((Store st) -> nz(st.getRating()), Comparator.reverseOrder())
-                                .thenComparing(Store::getName))
+                        .sorted(Comparator.comparingInt((ApiStore st) -> nzi(st.getReviewCount())).reversed()
+                                .thenComparing((ApiStore st) -> nz(st.getRating()), Comparator.reverseOrder())
+                                .thenComparing(ApiStore::getName))
                         .toList();
                 default -> pageResult.getContent().stream()
-                        .sorted(Comparator.comparingDouble((Store st) -> -storeScore(keyword, st))
-                                .thenComparing((Store st) -> nzi(st.getReviewCount()), Comparator.reverseOrder())
-                                .thenComparing((Store st) -> nz(st.getRating()), Comparator.reverseOrder())
-                                .thenComparing(Store::getName))
+                        .sorted(Comparator.comparingDouble((ApiStore st) -> -storeScore(keyword, st))
+                                .thenComparing((ApiStore st) -> nzi(st.getReviewCount()), Comparator.reverseOrder())
+                                .thenComparing((ApiStore st) -> nz(st.getRating()), Comparator.reverseOrder())
+                                .thenComparing(ApiStore::getName))
                         .toList();
             };
 
-            List<Store> slice = slice(sorted, page, size);
+            List<ApiStore> slice = slice(sorted, page, size);
             List<StoreCardDto> content = slice.stream()
                     .map(sv -> new StoreCardDto(
                             sv.getId(),
@@ -116,7 +116,7 @@ public class SearchService {
         return 0.6 * rel + 0.2 * rate + 0.2 * rev;
     }
 
-    private double storeScore(String q, Store s) {
+    private double storeScore(String q, ApiStore s) {
         double rel = relevance(q, s.getName());
         double rate = nz(s.getRating());
         double rev = Math.log1p(nzi(s.getReviewCount()));

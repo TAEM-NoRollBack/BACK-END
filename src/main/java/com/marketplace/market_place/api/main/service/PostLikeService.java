@@ -6,7 +6,7 @@ import com.marketplace.market_place.api.main.entity.PostLike;
 import com.marketplace.market_place.api.main.repository.PostLikeRepository;
 import com.marketplace.market_place.api.main.repository.PostRepository;
 import com.marketplace.market_place.domain.User;
-import com.marketplace.market_place.domain.UserRepository;
+import com.marketplace.market_place.domain.DomainUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -17,14 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostLikeService {
 
     private final PostRepository postRepository;
-    private final UserRepository userRepository; // domain 패키지의 UserRepository
+    private final DomainUserRepository domainUserRepository; // domain 패키지의 UserRepository
     private final PostLikeRepository postLikeRepository;
 
     @Transactional
     public LikeToggleResponse toggleLike(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다. id=" + postId));
-        User user = userRepository.findById(userId)
+        User user = domainUserRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다. id=" + userId));
 
         boolean liked;

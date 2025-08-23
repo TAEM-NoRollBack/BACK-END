@@ -4,9 +4,9 @@ import com.marketplace.market_place.api.main.dto.*;
 import com.marketplace.market_place.api.main.model.QuickFilter;
 import com.marketplace.market_place.api.main.model.SortType;
 import com.marketplace.market_place.api.main.entity.Market;
-import com.marketplace.market_place.api.main.entity.Store;
+import com.marketplace.market_place.api.main.entity.ApiStore;
 import com.marketplace.market_place.api.main.repository.MarketRepository;
-import com.marketplace.market_place.api.main.repository.StoreRepository;
+import com.marketplace.market_place.api.main.repository.ApiStoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +19,7 @@ import java.util.List;
 public class QuickSearchService {
 
     private final MarketRepository marketRepository;
-    private final StoreRepository storeRepository;
+    private final ApiStoreRepository apiStoreRepository;
 
     private static final double EULJI_LAT = 37.4437;
     private static final double EULJI_LON = 127.1289;
@@ -69,28 +69,28 @@ public class QuickSearchService {
         QuickFilter filter = parseFilter(filterStr);
         SortType sort = parseSort(sortStr);
 
-        List<Store> all = storeRepository.findAll();
+        List<ApiStore> all = apiStoreRepository.findAll();
 
-        List<Store> filtered = switch (filter) {
+        List<ApiStore> filtered = switch (filter) {
             case NEARBY -> filterByRadiusStore(all, lat, lon, radius);
             case LUNCH  -> filterByRadiusStore(all, lat, lon, radius); // 임시 규칙
             case NEW    -> all.stream()
-                    .sorted(Comparator.comparingLong(Store::getId).reversed())
+                    .sorted(Comparator.comparingLong(ApiStore::getId).reversed())
                     .limit(500).toList();
             case EULJI  -> filterByRadiusStore(all, EULJI_LAT, EULJI_LON, radius);
             case ALL    -> all;
         };
 
-        Comparator<Store> cmp = switch (sort) {
+        Comparator<ApiStore> cmp = switch (sort) {
             case distance -> Comparator.comparingDouble(s -> distanceMeters(lat, lon, s.getLat(), s.getLon()));
-            case reviewCount -> Comparator.comparingInt((Store s) -> nzi(s.getReviewCount())).reversed()
-                    .thenComparing((Store s) -> nz(s.getRating()), Comparator.reverseOrder());
-            default -> Comparator.comparingDouble((Store s) -> nz(s.getRating())).reversed()
-                    .thenComparing((Store s) -> nzi(s.getReviewCount()), Comparator.reverseOrder());
+            case reviewCount -> Comparator.comparingInt((ApiStore s) -> nzi(s.getReviewCount())).reversed()
+                    .thenComparing((ApiStore s) -> nz(s.getRating()), Comparator.reverseOrder());
+            default -> Comparator.comparingDouble((ApiStore s) -> nz(s.getRating())).reversed()
+                    .thenComparing((ApiStore s) -> nzi(s.getReviewCount()), Comparator.reverseOrder());
         };
 
-        List<Store> sorted = filtered.stream().sorted(cmp).toList();
-        List<Store> slice = slice(sorted, page, size);
+        List<ApiStore> sorted = filtered.stream().sorted(cmp).toList();
+        List<ApiStore> slice = slice(sorted, page, size);
 
         List<StoreCardDto> content = slice.stream()
                 .map(sv -> new StoreCardDto(
@@ -120,7 +120,7 @@ public class QuickSearchService {
                         && distanceMeters(lat, lon, m.getLat(), m.getLon()) <= r)
                 .toList();
     }
-    private List<Store> filterByRadiusStore(List<Store> src, Double lat, Double lon, int r) {
+    private List<ApiStore> filterByRadiusStore(List<ApiStore> src, Double lat, Double lon, int r) {
         if (lat == null || lon == null) return List.of();
         return src.stream()
                 .filter(s -> s.getLat()!=null && s.getLon()!=null

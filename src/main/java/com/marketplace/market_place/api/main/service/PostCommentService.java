@@ -5,7 +5,7 @@ import com.marketplace.market_place.api.main.entity.PostComment;
 import com.marketplace.market_place.api.main.repository.PostCommentRepository;
 import com.marketplace.market_place.api.main.repository.PostRepository;
 import com.marketplace.market_place.domain.User;
-import com.marketplace.market_place.domain.UserRepository;
+import com.marketplace.market_place.domain.DomainUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +20,7 @@ public class PostCommentService {
 
     private final PostCommentRepository repository;
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
+    private final DomainUserRepository domainUserRepository;
 
     // 기본 CRUD (기존 유지)
     public List<PostComment> findAll() { return repository.findAll(); }
@@ -39,7 +39,7 @@ public class PostCommentService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-        User user = userRepository.findById(userId)
+        User user = domainUserRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         PostComment comment = new PostComment();
