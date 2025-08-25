@@ -5,37 +5,27 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.core.annotation.Order; // ✅ 이거여야 함
 
 @Configuration
-@Profile("prod")
+@Profile("prod") // prod에서만 이 체인도 로드 (원하면 빼도 됨)
 public class SecurityConfigProd {
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Bean(name = "prodFilterChain")
+    @Order(1) // 먼저 매칭
+    public SecurityFilterChain prodChain(HttpSecurity http) throws Exception {
         http
+                .securityMatcher("/api/**") // ✅ /api/** 만 담당
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/posts/**").authenticated() // 게시글 관련 인증 필요
-                        .requestMatchers("/mypage/**").authenticated() // 마이페이지 인증 필요
-                        .requestMatchers("/api/v1/**").permitAll() // 기본 CRUD는 허용
+                        .requestMatchers("/api/posts/**").permitAll()
+                        .requestMatchers("/api/v1/**").permitAll()
+                        .requestMatchers("/mypage/**").authenticated()
                         .anyRequest().permitAll()
                 )
-                .sessionManagement(session -> session
-                        .maximumSessions(1) // 중복 로그인 방지
-                        .maxSessionsPreventsLogin(false)
-                )
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .defaultSuccessUrl("/")
-                        .permitAll()
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                        .permitAll()
-                );
+                .formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/").permitAll())
+                .logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/")
+                        .invalidateHttpSession(true).deleteCookies("JSESSIONID").permitAll());
         return http.build();
     }
 }

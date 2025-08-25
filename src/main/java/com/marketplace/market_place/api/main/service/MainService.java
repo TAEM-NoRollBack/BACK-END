@@ -4,9 +4,9 @@ import com.marketplace.market_place.api.main.dto.MainBootstrapResponse;
 import com.marketplace.market_place.api.main.dto.MarketCardDto;
 import com.marketplace.market_place.api.main.dto.StoreCardDto;
 import com.marketplace.market_place.api.main.entity.Market;
-import com.marketplace.market_place.api.main.entity.Store;
+import com.marketplace.market_place.api.main.entity.ApiStore;
 import com.marketplace.market_place.api.main.repository.MarketRepository;
-import com.marketplace.market_place.api.main.repository.StoreRepository;
+import com.marketplace.market_place.api.main.repository.ApiStoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +18,7 @@ import java.util.List;
 public class MainService {
 
     private final MarketRepository marketRepository;
-    private final StoreRepository storeRepository;
+    private final ApiStoreRepository apiStoreRepository;
 
     @Transactional(readOnly = true)
     public MainBootstrapResponse bootstrap(double lat, double lon) {
@@ -34,7 +34,7 @@ public class MainService {
 
         // 2) DB에서 시장/가게 조회 (평점순 상위 10개)
         List<Market> markets = marketRepository.findTop10ByOrderByRatingDesc();
-        List<Store>  stores  = storeRepository.findTop10ByOrderByRatingDesc();
+        List<ApiStore> apiStores = apiStoreRepository.findTop10ByOrderByRatingDesc();
 
         // 3) DTO 매핑
         List<MarketCardDto> marketDtos = markets.stream()
@@ -50,7 +50,7 @@ public class MainService {
                 ))
                 .toList();
 
-        List<StoreCardDto> storeDtos = stores.stream()
+        List<StoreCardDto> storeDtos = apiStores.stream()
                 .map(s -> new StoreCardDto(
                         s.getId(),
                         s.getName(),

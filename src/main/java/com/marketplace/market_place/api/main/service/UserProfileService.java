@@ -4,7 +4,7 @@ import com.marketplace.market_place.api.main.dto.UserProfileUpdateRequest;
 import com.marketplace.market_place.api.main.entity.UserProfile;
 import com.marketplace.market_place.api.main.repository.*;
 import com.marketplace.market_place.domain.User;
-import com.marketplace.market_place.domain.UserRepository;
+import com.marketplace.market_place.domain.DomainUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,17 +16,17 @@ import java.util.*;
 @Transactional
 public class UserProfileService {
 
-    private final UserRepository userRepository;
+    private final DomainUserRepository domainUserRepository;
     private final UserProfileRepository userProfileRepository;
     private final PostRepository postRepository;
-    private final ReviewRepository reviewRepository;
-    private final BookmarkRepository bookmarkRepository;
+    private final ApiReviewRepository apiReviewRepository;
+    private final ApiBookmarkRepository apiBookmarkRepository;
     private final RewardRepository rewardRepository;
 
     // 프로필 조회
     @Transactional(readOnly = true)
     public Map<String, Object> getUserProfile(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = domainUserRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         Optional<UserProfile> profile = userProfileRepository.findById(userId);
@@ -42,7 +42,7 @@ public class UserProfileService {
 
     // 프로필 수정
     public void updateUserProfile(Long userId, UserProfileUpdateRequest request) {
-        User user = userRepository.findById(userId)
+        User user = domainUserRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         UserProfile profile = userProfileRepository.findById(userId)
@@ -65,23 +65,23 @@ public class UserProfileService {
 
     // 회원 탈퇴
     public void deleteUser(Long userId) {
-        userRepository.deleteById(userId);
+        domainUserRepository.deleteById(userId);
     }
 
     // 활동 내역 조회
     @Transactional(readOnly = true)
     public Map<String, Object> getUserActivity(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = domainUserRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         // 1. 내가 쓴 게시글
         var posts = postRepository.findByUserOrderByCreatedAtDesc(user);
 
         // 2. 내가 쓴 리뷰
-        var reviews = reviewRepository.findByUserOrderByIdDesc(user);
+        var reviews = apiReviewRepository.findByUserOrderByIdDesc(user);
 
         // 3. 북마크한 상점
-        var bookmarks = bookmarkRepository.findByUserOrderByIdDesc(user);
+        var bookmarks = apiBookmarkRepository.findByUserOrderByIdDesc(user);
 
         // 4. 적립 리워드
         var rewards = rewardRepository.findByUserOrderByIdDesc(user);

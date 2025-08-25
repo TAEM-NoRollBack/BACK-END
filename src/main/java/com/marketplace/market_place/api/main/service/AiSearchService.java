@@ -3,8 +3,8 @@ package com.marketplace.market_place.api.main.service;
 import com.marketplace.market_place.api.main.dto.AiSearchRequest;
 import com.marketplace.market_place.api.main.dto.AiSearchResponse;
 import com.marketplace.market_place.api.main.dto.AiStoreItem;
-import com.marketplace.market_place.api.main.entity.Store;
-import com.marketplace.market_place.api.main.repository.StoreRepository;
+import com.marketplace.market_place.api.main.entity.ApiStore;
+import com.marketplace.market_place.api.main.repository.ApiStoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,19 +15,19 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AiSearchService {
 
-    private final StoreRepository storeRepository;
+    private final ApiStoreRepository apiStoreRepository;
     private final AiSearchLLM ai;
 
     // ---- Helpers to reduce warnings & improve type-safety ----
     private static final class ScoredStore {
         final double score;
         final Double dist; // may be null
-        final Store store;
+        final ApiStore apiStore;
 
-        ScoredStore(double score, Double dist, Store store) {
+        ScoredStore(double score, Double dist, ApiStore apiStore) {
             this.score = score;
             this.dist = dist;
-            this.store = store;
+            this.apiStore = apiStore;
         }
     }
 
@@ -63,8 +63,8 @@ public class AiSearchService {
         final int finalRadius = (rFromLLM != null) ? rFromLLM : baseRadius;
 
         // 2) 후보 필터링
-        List<Store> all = storeRepository.findAll();
-        List<Store> filtered = all.stream().filter(s -> {
+        List<ApiStore> all = apiStoreRepository.findAll();
+        List<ApiStore> filtered = all.stream().filter(s -> {
             String bundle = ((s.getName()==null?"":s.getName()) + " " + (s.getDescription()==null?"":s.getDescription())).toLowerCase();
             boolean ok = true;
             for (String k: keywords) ok &= bundle.contains(k.toLowerCase());
@@ -94,7 +94,7 @@ public class AiSearchService {
                 .toList();
 
         List<AiStoreItem> items = scored.stream().map(ss -> {
-            Store s = ss.store;
+            ApiStore s = ss.apiStore;
             Double dist = ss.dist;
             String reason = buildReason(cuisine, vibe, s);
             return new AiStoreItem(
@@ -122,7 +122,7 @@ public class AiSearchService {
         }
         return score;
     }
-    private static String buildReason(List<String> cuisine, List<String> vibe, Store s){
+    private static String buildReason(List<String> cuisine, List<String> vibe, ApiStore s){
         String base = "평점 " + nz(s.getRating()) + ", 리뷰 " + nzi(s.getReviewCount());
         if (!cuisine.isEmpty()) base = String.join("/", cuisine) + " 연관, " + base;
         if (!vibe.isEmpty())    base = String.join("/", vibe) + " 분위기, " + base;
